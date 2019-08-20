@@ -1,0 +1,14 @@
+{{range $i, $clients := service "kafka-zookeeper-client|any"}}
+server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
+{{ end }}
+
+{{with $clients := service "kafka-zookeeper-client|any"}}
+server.1={{with index $clients 0}}{{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 0}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 0}}{{.Port}}{{end}}{{end}};{{.Port}}{{end}}
+server.2={{with index $clients 1}}{{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 1}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 1}}{{.Port}}{{end}}{{end}};{{.Port}}{{end}}
+server.3={{with index $clients 2}}{{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 2}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 2}}{{.Port}}{{end}}{{end}};{{.Port}}{{end}}
+{{end}}
+
+{{range $i, $peers1 := service "kafka-zookeeper-peer1|any" }}{{if eq $i 0 }}{{.Port}}{{ end }}{{ end }}
+{{range $i, $peers2 := service "kafka-zookeeper-peer2|any" }}{{if eq $i 0 }}{{.Port}}{{ end }}{{ end }}
+
+{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 0}}{{.Port}}{{ end }}{{ end }}
