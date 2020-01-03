@@ -51,13 +51,22 @@ dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
       }
+//      template {
+//        destination = "local/conf/zoo.cfg.dynamic"
+//        change_mode = "noop"
+//        data = <<EOF
+//server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
+//server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
+//server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+//EOF
+//      }
       template {
         destination = "local/conf/zoo.cfg.dynamic"
         change_mode = "noop"
         data = <<EOF
-server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
-server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
-server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+{{range $i, $clients := service "kafka-zookeeper-client|any"}}
+server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
+{{ end }}
 EOF
       }
       template {
@@ -172,11 +181,20 @@ EOF
         destination = "local/conf/zoo.cfg.dynamic"
         change_mode = "noop"
         data = <<EOF
-server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
-server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
-server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+{{range $i, $clients := service "kafka-zookeeper-client|any"}}
+server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
+{{ end }}
 EOF
       }
+//      template {
+//        destination = "local/conf/zoo.cfg.dynamic"
+//        change_mode = "noop"
+//        data = <<EOF
+//server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
+//server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
+//server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+//EOF
+//      }
       template {
         destination = "local/conf/log4j.properties"
         change_mode = "noop"
@@ -289,11 +307,20 @@ EOF
         destination = "local/conf/zoo.cfg.dynamic"
         change_mode = "noop"
         data = <<EOF
-server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
-server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
-server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+{{range $i, $clients := service "kafka-zookeeper-client|any"}}
+server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
+{{ end }}
 EOF
       }
+//      template {
+//        destination = "local/conf/zoo.cfg.dynamic"
+//        change_mode = "noop"
+//        data = <<EOF
+//server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
+//server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
+//server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+//EOF
+//      }
       template {
         destination = "local/conf/log4j.properties"
         change_mode = "noop"
