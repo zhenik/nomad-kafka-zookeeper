@@ -2,10 +2,10 @@
 
 job "kafka-zookeeper" {
   # Specify Region
-  region = "us-west"
+//  region = "us-west"
 
   # Specify Datacenter
-  datacenters = [ "alpha"]
+  datacenters = ["dc1"]
 
   # Specify job type
   type = "service"

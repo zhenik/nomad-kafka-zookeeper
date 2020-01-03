@@ -1,12 +1,13 @@
 #!/bin/bash
 
+# https://github.com/dprails/nomad-kafka-zookeeper/blob/master/docker/kafka-zookeeper/docker-entrypoint.sh
 set -e
 
 # sleep for 60s to allow nomad services to be registered
 sleep 20
 
 # create the zookeeper dynamic cfg from consul template
-if [[ -z "$CONSUL_HTTP_ADDR}" ]]; then
+if [[ -z "$CONSUL_HTTP_ADDR" ]]; then
   consul-template -once -consul-addr=${CONSUL_HTTP_ADDR} -template /consul-templates/zookeeper-services.ctpl:$ZOO_CONF_DIR/zoo.cfg.dynamic
 else
   consul-template -once -template /consul-templates/zookeeper-services.ctpl:$ZOO_CONF_DIR/zoo.cfg.dynamic

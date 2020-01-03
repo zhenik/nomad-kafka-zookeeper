@@ -1,8 +1,6 @@
 # Zookeeper
 
 job "kafka-zookeeper" {
-  # Specify Region
-//  region = "us-west"
 
   # Specify Datacenter
   datacenters = [ "dc1"]
@@ -21,20 +19,20 @@ job "kafka-zookeeper" {
     # define the number of times the tasks need to be executed
     count = 1
 
-    restart {
-      attempts = 2
-      interval = "5m"
-      delay    = "30s"
-      mode     = "delay"
-    }
+    //    restart {
+    //      attempts = 2
+    //      interval = "5m"
+    //      delay    = "25s"
+    //      mode     = "delay"
+    //    }
 
-    task "zookeeper" {
+    task "zk1" {
       driver = "docker"
       template {
         destination = "local/data/myid"
         change_mode = "noop"
         data = <<EOF
-{{ env "NOMAD_ALLOC_INDEX" | parseInt | add 1 }}
+1
 EOF
       }
       template {
@@ -48,7 +46,16 @@ standaloneEnabled=false
 reconfigEnabled=true
 skipACL=true
 dataDir=/data
-server.{{ env "NOMAD_ALLOC_INDEX" | parseInt | add 1}}:{{ env "NOMAD_IP_client" }}:{{ env "NOMAD_PORT_peer1" }}:{{ env "NOMAD_PORT_peer2" }};{{ env "NOMAD_PORT_client" }}
+dynamicConfigFile=/conf/zoo.cfg.dynamic
+EOF
+      }
+      template {
+        destination = "local/conf/zoo.cfg.dynamic"
+        change_mode = "noop"
+        data = <<EOF
+{{range $i, $clients := service "kafka-zookeeper-client|any"}}
+server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
+{{ end }}
 EOF
       }
       template {
@@ -89,17 +96,18 @@ EOF
       config {
         image = "zookeeper:3.5.5"
         labels {
-            group = "zk-docker"
+          group = "zk-docker"
         }
         network_mode = "host"
         port_map {
-            client = 2181
-            peer1 = 2888
-            peer2 = 3888
+          client = 2181
+          peer1 = 2888
+          peer2 = 3888
         }
         volumes = [
           "local/conf:/conf",
-          "local/data:/data"
+          "local/data:/data",
+          "local/logs:/logs"
         ]
       }
       env {
@@ -117,21 +125,18 @@ EOF
       }
       service {
         port = "client"
-        name = "kafka-zookeeper-client"
         tags = [
           "kafka-zookeeper-client"
         ]
       }
       service {
         port = "peer1"
-        name = "kafka-zookeeper-peer1"
         tags = [
           "kafka-zookeeper-peer1"
         ]
       }
       service {
         port = "peer2"
-        name = "kafka-zookeeper-peer2"
         tags = [
           "kafka-zookeeper-peer2"
         ]
