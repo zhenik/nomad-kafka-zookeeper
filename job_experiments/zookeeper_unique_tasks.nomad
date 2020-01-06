@@ -7,15 +7,21 @@ job "kafka-zookeeper" {
 
   group "zk" {
     count = 1
-    restart {
-      attempts = 2
-      interval = "5m"
-      delay    = "25s"
-      mode     = "delay"
+//    restart {
+//      attempts = 2
+//      interval = "5m"
+//      delay    = "25s"
+//      mode     = "delay"
+//    }
+    ephemeral_disk {
+      migrate = true
+      size    = "500"
+      sticky  = true
     }
 
     task "zk1" {
       driver = "docker"
+      user = "zookeeper"
       //ID
       template {
         destination = "local/data/myid"
@@ -46,7 +52,7 @@ EOF
         change_mode = "restart"
         splay = "1m"
         data = <<EOF
-server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
+server.1={{ env "NOMAD_IP_client" }}:{{ env "NOMAD_HOST_PORT_peer1" }}:{{ env "NOMAD_HOST_PORT_peer2" }};{{ env "NOMAD_HOST_PORT_client" }}
 server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
 server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
 EOF
@@ -88,7 +94,7 @@ log4j.appender.ROLLINGFILE.layout.ConversionPattern=%d{ISO8601} [myid:%X{myid}] 
 EOF
       }
       config {
-        image = "zhenik/zookeeper-nomad:3.5.5"
+        image = "zhenik/nomad-zoo:3.5.5"
         labels { group = "zk-docker" }
         network_mode = "host"
         port_map {
@@ -133,8 +139,10 @@ EOF
       }
     }
 
+
     task "zk2" {
       driver = "docker"
+      user = "zookeeper"
       template {
         destination = "local/data/myid"
         change_mode = "noop"
@@ -163,7 +171,7 @@ EOF
         splay = "1m"
         data = <<EOF
 server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
-server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
+server.2={{ env "NOMAD_IP_client" }}:{{ env "NOMAD_HOST_PORT_peer1" }}:{{ env "NOMAD_HOST_PORT_peer2" }};{{ env "NOMAD_HOST_PORT_client" }}
 server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
 EOF
       }
@@ -203,15 +211,15 @@ log4j.appender.ROLLINGFILE.layout.ConversionPattern=%d{ISO8601} [myid:%X{myid}] 
 EOF
       }
       config {
-        image = "zhenik/zookeeper-nomad:3.5.5"
+        image = "zhenik/nomad-zoo:3.5.5"
         labels {
-            group = "zk-docker"
+          group = "zk-docker"
         }
         network_mode = "host"
         port_map {
-            client = 2181
-            peer1 = 2888
-            peer2 = 3888
+          client = 2181
+          peer1 = 2888
+          peer2 = 3888
         }
         volumes = [
           "local/conf:/conf",
@@ -221,6 +229,16 @@ EOF
       }
       env {
         ZOO_LOG4J_PROP="INFO,CONSOLE"
+      }
+      resources {
+        cpu = 100
+        memory = 128
+        network {
+          mbits = 10
+          port "client" {}
+          port "peer1" {}
+          port "peer2" {}
+        }
       }
       service {
         port = "client"
@@ -244,6 +262,7 @@ EOF
 
     task "zk3" {
       driver = "docker"
+      user = "zookeeper"
       template {
         destination = "local/data/myid"
         change_mode = "noop"
@@ -273,7 +292,7 @@ EOF
         data = <<EOF
 server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
 server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
-server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+server.3={{ env "NOMAD_IP_client" }}:{{ env "NOMAD_HOST_PORT_peer1" }}:{{ env "NOMAD_HOST_PORT_peer2" }};{{ env "NOMAD_HOST_PORT_client" }}
 EOF
       }
       template {
@@ -312,7 +331,7 @@ log4j.appender.ROLLINGFILE.layout.ConversionPattern=%d{ISO8601} [myid:%X{myid}] 
 EOF
       }
       config {
-        image = "zhenik/zookeeper-nomad:3.5.5"
+        image = "zhenik/nomad-zoo:3.5.5"
         labels {
             group = "zk-docker"
         }
