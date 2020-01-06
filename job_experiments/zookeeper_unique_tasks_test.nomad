@@ -31,6 +31,7 @@ EOF
         port_map {
             client = 2181
             peer1 = 2888
+            peer2 = 3888
         }
         volumes = [
           "local/conf:/conf",
@@ -93,6 +94,7 @@ EOF
         port_map {
             client = 2181
             peer1 = 2888
+            peer2 = 3888
         }
         volumes = [
           "local/conf:/conf",
@@ -154,6 +156,7 @@ EOF
         port_map {
           client = 2181
           peer1 = 2888
+          peer2 = 3888
         }
         volumes = [
           "local/conf:/conf",
