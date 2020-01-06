@@ -1,35 +1,22 @@
 # Zookeeper
 
 job "kafka-zookeeper" {
-  # Specify Region
-//  region = "us-west"
-
-  # Specify Datacenter
   datacenters = [ "dc1"]
-
-  # Specify job type
   type = "service"
+  update { max_parallel = 1 }
 
-  # Run tasks in serial or parallel (1 for serial)
-  update {
-    max_parallel = 1
-  }
-
-  # define group
   group "zk" {
-
-    # define the number of times the tasks need to be executed
     count = 1
-
-//    restart {
-//      attempts = 2
-//      interval = "5m"
-//      delay    = "25s"
-//      mode     = "delay"
-//    }
+    restart {
+      attempts = 2
+      interval = "5m"
+      delay    = "25s"
+      mode     = "delay"
+    }
 
     task "zk1" {
       driver = "docker"
+      //ID
       template {
         destination = "local/data/myid"
         change_mode = "noop"
@@ -37,9 +24,11 @@ job "kafka-zookeeper" {
 1
 EOF
       }
+      //default config
       template {
         destination = "local/conf/zoo.cfg"
-        change_mode = "noop"
+        change_mode = "restart"
+        splay = "1m"
         data = <<EOF
 tickTime=2000
 initLimit=5
@@ -51,24 +40,18 @@ dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
       }
-//      template {
-//        destination = "local/conf/zoo.cfg.dynamic"
-//        change_mode = "noop"
-//        data = <<EOF
-//server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
-//server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
-//server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
-//EOF
-//      }
+      //dynamic config
       template {
         destination = "local/conf/zoo.cfg.dynamic"
-        change_mode = "noop"
+        change_mode = "restart"
+        splay = "1m"
         data = <<EOF
-{{range $i, $clients := service "kafka-zookeeper-client|any"}}
-server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
-{{ end }}
+server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
+server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
+server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
 EOF
       }
+      //logger appender
       template {
         destination = "local/conf/log4j.properties"
         change_mode = "noop"
@@ -105,10 +88,8 @@ log4j.appender.ROLLINGFILE.layout.ConversionPattern=%d{ISO8601} [myid:%X{myid}] 
 EOF
       }
       config {
-        image = "zookeeper:3.5.5"
-        labels {
-            group = "zk-docker"
-        }
+        image = "zhenik/zookeeper-nomad:3.5.5"
+        labels { group = "zk-docker" }
         network_mode = "host"
         port_map {
             client = 2181
@@ -121,9 +102,7 @@ EOF
           "local/logs:/logs"
         ]
       }
-      env {
-        ZOO_LOG4J_PROP="INFO,CONSOLE"
-      }
+      env { ZOO_LOG4J_PROP="INFO,CONSOLE" }
       resources {
         cpu = 100
         memory = 128
@@ -165,7 +144,8 @@ EOF
       }
       template {
         destination = "local/conf/zoo.cfg"
-        change_mode = "noop"
+        change_mode = "restart"
+        splay = "1m"
         data = <<EOF
 tickTime=2000
 initLimit=5
@@ -179,22 +159,14 @@ EOF
       }
       template {
         destination = "local/conf/zoo.cfg.dynamic"
-        change_mode = "noop"
+        change_mode = "restart"
+        splay = "1m"
         data = <<EOF
-{{range $i, $clients := service "kafka-zookeeper-client|any"}}
-server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
-{{ end }}
+server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
+server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
+server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
 EOF
       }
-//      template {
-//        destination = "local/conf/zoo.cfg.dynamic"
-//        change_mode = "noop"
-//        data = <<EOF
-//server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
-//server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
-//server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
-//EOF
-//      }
       template {
         destination = "local/conf/log4j.properties"
         change_mode = "noop"
@@ -231,7 +203,7 @@ log4j.appender.ROLLINGFILE.layout.ConversionPattern=%d{ISO8601} [myid:%X{myid}] 
 EOF
       }
       config {
-        image = "zookeeper:3.5.5"
+        image = "zhenik/zookeeper-nomad:3.5.5"
         labels {
             group = "zk-docker"
         }
@@ -249,16 +221,6 @@ EOF
       }
       env {
         ZOO_LOG4J_PROP="INFO,CONSOLE"
-      }
-      resources {
-        cpu = 100
-        memory = 128
-        network {
-          mbits = 10
-          port "client" {}
-          port "peer1" {}
-          port "peer2" {}
-        }
       }
       service {
         port = "client"
@@ -291,7 +253,8 @@ EOF
       }
       template {
         destination = "local/conf/zoo.cfg"
-        change_mode = "noop"
+        change_mode = "restart"
+        splay = "1m"
         data = <<EOF
 tickTime=2000
 initLimit=5
@@ -305,22 +268,14 @@ EOF
       }
       template {
         destination = "local/conf/zoo.cfg.dynamic"
-        change_mode = "noop"
+        change_mode = "restart"
+        splay = "1m"
         data = <<EOF
-{{range $i, $clients := service "kafka-zookeeper-client|any"}}
-server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
-{{ end }}
+server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
+server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
+server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
 EOF
       }
-//      template {
-//        destination = "local/conf/zoo.cfg.dynamic"
-//        change_mode = "noop"
-//        data = <<EOF
-//server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
-//server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
-//server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
-//EOF
-//      }
       template {
         destination = "local/conf/log4j.properties"
         change_mode = "noop"
@@ -357,7 +312,7 @@ log4j.appender.ROLLINGFILE.layout.ConversionPattern=%d{ISO8601} [myid:%X{myid}] 
 EOF
       }
       config {
-        image = "zookeeper:3.5.5"
+        image = "zhenik/zookeeper-nomad:3.5.5"
         labels {
             group = "zk-docker"
         }
