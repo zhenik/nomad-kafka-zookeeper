@@ -4,7 +4,7 @@
 set -e
 
 # sleep for 60s to allow nomad services to be registered
-sleep 20
+sleep 60
 
 # create the zookeeper dynamic cfg from consul template
 if [[ -z "$CONSUL_HTTP_ADDR" ]]; then

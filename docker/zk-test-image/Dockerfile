@@ -1,0 +1,75 @@
+FROM openjdk:8-jre-slim
+
+ARG GPG_KEY=3F7A1D16FA4217B1DC75E1C9FFE35B7F15DFA1BA
+ARG SHORT_DISTRO_NAME=zookeeper-3.5.5
+ARG DISTRO_NAME=apache-zookeeper-3.5.5-bin
+#ARG CONSUL_VERSION=1.6.2
+#ARG CONSUL_TEMPLATE_VERSION=0.23.0
+
+ENV ZOO_CONF_DIR=/conf \
+    ZOO_DATA_DIR=/data \
+    ZOO_DATA_LOG_DIR=/datalog \
+    ZOO_LOG_DIR=/logs \
+    BIN_DIR=/bin
+
+# Add a user with an explicit UID/GID and create necessary directories
+RUN set -eux; \
+    groupadd -r zookeeper --gid=1000; \
+    useradd -r -g zookeeper --uid=1000 zookeeper; \
+    mkdir -p "$BIN_DIR" "$ZOO_DATA_LOG_DIR" "$ZOO_DATA_DIR" "$ZOO_CONF_DIR" "$ZOO_LOG_DIR"; \
+    chown zookeeper:zookeeper "$ZOO_DATA_LOG_DIR" "$ZOO_DATA_DIR" "$ZOO_CONF_DIR" "$ZOO_LOG_DIR"
+
+# Install required packages
+RUN set -eux; \
+    apt-get update; \
+    DEBIAN_FRONTEND=noninteractive \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        dirmngr \
+        gosu \
+        gnupg \
+        netcat \
+        wget \
+        unzip; \
+    rm -rf /var/lib/apt/lists/*; \
+# Verify that gosu binary works
+    gosu nobody true
+
+# Todo: security - verify its PGP signature
+RUN set -eux;
+RUN echo "https://www.apache.org/dist/zookeeper/$SHORT_DISTRO_NAME/$DISTRO_NAME.tar.gz"
+#RUN wget "https://www.apache.org/dist/zookeeper/$SHORT_DISTRO_NAME/$DISTRO_NAME.tar.gz" # problem with certificates behind company VPN
+ADD "https://www.apache.org/dist/zookeeper/$SHORT_DISTRO_NAME/$DISTRO_NAME.tar.gz" "./$DISTRO_NAME.tar.gz"
+RUN export GNUPGHOME="$(mktemp -d)"
+RUN tar -zxf "$DISTRO_NAME.tar.gz"
+RUN mv "$DISTRO_NAME/conf/"* "$ZOO_CONF_DIR"
+RUN rm -rf "$DISTRO_NAME.tar.gz"
+RUN chown -R zookeeper:zookeeper "/$DISTRO_NAME"
+
+# Download consul cli
+#RUN wget https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip && \
+#ADD "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" "./consul_${CONSUL_VERSION}_linux_amd64.zip"
+#RUN unzip consul_${CONSUL_VERSION}_linux_amd64.zip
+#RUN mv consul $BIN_DIR/.
+#RUN rm -f consul_${CONSUL_VERSION}_linux_amd64.zip
+
+# Download consul consul-template
+#RUN wget https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.tgz && \
+#ADD "https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.tgz" "./consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.tgz"
+#RUN tar -xzf consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.tgz
+#RUN mv consul-template ${BIN_DIR}/.
+#RUN rm -f consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.tgz
+
+# copy consul template
+#RUN mkdir -p /consul-templates
+#COPY templates/zookeeper-services.ctpl /consul-templates/zookeeper-services.ctpl
+
+EXPOSE 2181 2281 2888 3888 8080
+
+ENV PATH=$PATH:$BIN_DIR:/$DISTRO_NAME/bin \
+    ZOOCFGDIR=$ZOO_CONF_DIR
+
+COPY docker-entrypoint.sh /
+RUN ["chmod", "+x", "/docker-entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["zkServer.sh", "start-foreground"]

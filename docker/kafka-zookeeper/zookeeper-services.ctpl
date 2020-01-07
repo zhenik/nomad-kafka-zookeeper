@@ -1,3 +1,6 @@
 {{range $i, $clients := service "kafka-zookeeper-client|any"}}
-server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:{{with $peers2 := service "kafka-zookeeper-peer2|any"}}{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
+server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}
+{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:
+{{with $peers2 := service "kafka-zookeeper-peer2|any"}}
+{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
 {{ end }}

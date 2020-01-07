@@ -1,3 +1,72 @@
-server.1={{ env "NOMAD_IP_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
+Nomad client= {{ env "NOMAD_IP_client" }}
+server.1={{ env "NOMAD_IP_zk_zk1_client" }}:{{ env "NOMAD_PORT_zk1_peer1" }}:{{ env "NOMAD_PORT_zk1_peer2" }};{{ env "NOMAD_PORT_zk1_client" }}
 server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
 server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+
+Here:
+{{ range $i, $clients := service "kafka-zookeeper-client|any"}}
+server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}
+{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:
+{{with $peers2 := service "kafka-zookeeper-peer2|any"}}
+{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
+{{ end }}
+
+Here1:
+{{ range service "kafka-zookeeper-client" }}
+server {{ .Name }} {{ .Address }}:{{ .Port }}{{ end }}
+
+
+Here2:
+{{ range service "http" }}
+server {{ .Name }} {{ .Address }}:{{ .Port }}{{ end }}
+
+Here3:
+{{ range services }}
+{{ .Name }}: {{ .Tags | join "," }}{{ end }}
+
+{{range $i, $clients := service "kafka-zookeeper-client|any"}}
+server.{{ $i | add 1 }}={{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}
+{{with index $peers1 $i}}{{.Port}}{{end}}{{end}}:
+{{with $peers2 := service "kafka-zookeeper-peer2|any"}}
+{{with index $peers2 $i}}{{.Port}}{{end}}{{end}};{{.Port}}
+{{ end }}
+
+
+By Tag:
+{{ range $tag, $services := service "kafka-zookeeper-client.any" | byTag }}{{ $tag }}
+{{ range $services }} server {{ .Name }} {{ .Address }}:{{ .Port }}
+{{ end }}{{ end }}
+
+{{ range $tag, $services := service "some-service" | byTag }}
+backend some-service-{{ $tag }}
+
+    {{ if eq $tag "something" }}
+    ....
+    {{ end }}
+    ...
+    {{ range $services }}
+    server {{.Address}}-{{.Port}} {{.Address}}:{{.Port}} check downinter 3s inter 2000 fall 3 maxconn 100 check cookie {{.ID}} weight 1
+    {{ end }}
+{{ end }}
+
+
+ENV:
+{{ env "CLUSTER_ID" }}
+{{ env "CLUSTER_ID" | toLower }}
+
+Tags:
+{{range services}}
+{{$service:=.Name}}
+{{range .Tags}}
+{{if eq . "kafka-zookeeper-client" }}
+{{$service}} #####
+{{range service $service "passing" }}
+{{.Address}}:{{with $peers1 := service "kafka-zookeeper-peer1|any"}}
+{{with index $peers1}}$peers1{{end}}{{end}}:
+{{with $peers2 := service "kafka-zookeeper-peer2|any"}}
+{{with index $peers2}}$peers2{{end}};{{.Port}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}

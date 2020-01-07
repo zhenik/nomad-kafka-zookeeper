@@ -1,0 +1,8 @@
+1
+{{ range $i, $clients := services }}{{if .Name | regexMatch "kafka*"}}
+server.{{ $i }}={{$clients}}
+{{ end }}
+{{ end }}
+
+{{printf "config/%s/consul/services" (env "HOSTNAME") | key}}
+

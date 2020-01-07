@@ -1,1 +1,1 @@
-sudo consul-template -consul-addr=http://172.17.0.1:8500 -once -template ./conf.ctpl:out.txt
+sudo consul-template -consul-addr=http://172.17.0.1:8500 -once -template ./wildcard.ctpl:out.txt
