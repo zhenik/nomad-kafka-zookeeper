@@ -16,3 +16,8 @@ services:
   zoo:
     image: zhenik/nomad-zoo:3.5.5
     build: .
+    ports:
+    - 8080
+    volumes:
+    - "./v/zoo.cfg:/conf/zoo.cfg"
+    - "./v/zoo.cfg.dynamic:/conf/zoo.cfg.dynamic"

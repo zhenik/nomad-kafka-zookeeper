@@ -8,6 +8,7 @@ sleep 20
 
 # Allow the container to be started with `--user`
 if [[ "$1" = 'zkServer.sh' && "$(id -u)" = '0' ]]; then
+    echo CHANGE_RIGHTS
     chown -R zookeeper "$ZOO_DATA_DIR" "$ZOO_DATA_LOG_DIR" "$ZOO_LOG_DIR" "$ZOO_CONF_DIR"
     exec gosu zookeeper "$0" "$@"
 fi
@@ -42,6 +43,10 @@ if [[ ! -f "$ZOO_CONF_DIR/zoo.cfg" ]]; then
     fi
 
 fi
+
+echo -------------------------------------------
+whoami
+ls -l
 
 # source in SERVER_JVMFLAGS and CLIENT_JVMFLAGS
 #. $ZOO_CONF_DIR/jvm_flags.sh

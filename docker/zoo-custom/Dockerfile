@@ -27,11 +27,11 @@ ENV ZOO_CONF_DIR=/conf \
 #    BIN_DIR=/bin
 
 # Add a user with an explicit UID/GID and create necessary directories
-RUN set -eux; \
-    groupadd -r zookeeper --gid=1000; \
-    useradd -r -g zookeeper --uid=1000 zookeeper; \
-    mkdir -p "$BIN_DIR" "$ZOO_DATA_LOG_DIR" "$ZOO_DATA_DIR" "$ZOO_CONF_DIR" "$ZOO_LOG_DIR"; \
-    chown -R zookeeper:zookeeper "$ZOO_DATA_LOG_DIR" "$ZOO_DATA_DIR" "$ZOO_CONF_DIR" "$ZOO_LOG_DIR"
+RUN set -eux
+RUN groupadd -r zookeeper --gid=1000
+RUN useradd -r -g zookeeper --uid=1000 zookeeper
+RUN mkdir -p "$BIN_DIR" "$ZOO_DATA_LOG_DIR" "$ZOO_DATA_DIR" "$ZOO_CONF_DIR" "$ZOO_LOG_DIR"
+RUN chown -R zookeeper:zookeeper "$ZOO_DATA_LOG_DIR" "$ZOO_DATA_DIR" "$ZOO_CONF_DIR" "$ZOO_LOG_DIR"
 
 # Install required packages
 RUN set -eux; \
@@ -52,29 +52,12 @@ RUN set -eux; \
 # Download Apache Zookeeper, verify its PGP signature, untar and clean up
 RUN set -eux;
 RUN echo "https://www.apache.org/dist/zookeeper/$SHORT_DISTRO_NAME/$DISTRO_NAME.tar.gz"
-#RUN wget "https://www.apache.org/dist/zookeeper/$SHORT_DISTRO_NAME/$DISTRO_NAME.tar.gz" # problem with certificates behind company VPN
 ADD "https://www.apache.org/dist/zookeeper/$SHORT_DISTRO_NAME/$DISTRO_NAME.tar.gz" "./$DISTRO_NAME.tar.gz"
 RUN export GNUPGHOME="$(mktemp -d)"
 RUN tar -zxf "$DISTRO_NAME.tar.gz"
 RUN mv "$DISTRO_NAME/conf/"* "$ZOO_CONF_DIR"
 RUN rm -rf "$DISTRO_NAME.tar.gz"
 RUN chown -R zookeeper:zookeeper "/$DISTRO_NAME"
-
-# Download consul cli
-#RUN wget -q https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip && \
-#    unzip consul_${CONSUL_VERSION}_linux_amd64.zip && \
-#    mv consul $BIN_DIR/. && \
-#    rm -f consul_${CONSUL_VERSION}_linux_amd64.zip
-
-# Download consul consul-template
-#RUN wget -q https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.tgz && \
-#    tar -xzf consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.tgz && \
-#    mv consul-template ${BIN_DIR}/. && \
-#    rm -f consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.tgz
-
-# copy consul template
-#RUN mkdir -p /consul-templates
-#COPY zookeeper-services.ctpl /consul-templates/
 
 EXPOSE 2181 2281 2888 3888 8080
 
