@@ -1,0 +1,13 @@
+{{range $i, $services := service "kafka-zookeeper-zk-zk1|any"}}
+    {{env "NOMAD_IP_client"}}:{{env "NOMAD_HOST_PORT_peer1"}}:{{env "NOMAD_HOST_PORT_peer2"}};{{env "NOMAD_HOST_PORT_client"}}
+{{ end }}
+
+
+{{ range $i, $services := service "kafka-zookeeper-zk-zk1|any" }}
+{{ range service "kafka-zookeeper-peer1"}}
+server {{ .Name }} {{ .Address }}:{{ .Port }}{{ end }}
+{{ end }}
+
+{{range $i, $services := service "kafka-zookeeper-zk-zk1|any"}}
+{{$services}}
+{{ end }}
