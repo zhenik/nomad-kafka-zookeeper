@@ -40,3 +40,10 @@ $ kafka-topics --zookeeper <kafka-zookeeper-client-1 ip>:<kafka-zookeeper-client
 ```
 $ kafka-topics --zookeeper <kafka-zookeeper-client-1 ip>:<kafka-zookeeper-client-1 port> --list
 ```
+
+### Validate
+docker exec <conainer_id> /apache-zookeeper-3.5.5-bin/bin/zkServer.sh status
+
+docker exec 80ca /apache-zookeeper-3.5.5-bin/bin/zkServer.sh status &&
+    docker exec 699a /apache-zookeeper-3.5.5-bin/bin/zkServer.sh status && 
+    docker exec e035 /apache-zookeeper-3.5.5-bin/bin/zkServer.sh status

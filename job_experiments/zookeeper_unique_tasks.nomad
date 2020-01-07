@@ -7,12 +7,12 @@ job "kafka-zookeeper" {
 
   group "zk" {
     count = 1
-//    restart {
-//      attempts = 2
-//      interval = "5m"
-//      delay    = "25s"
-//      mode     = "delay"
-//    }
+    restart {
+      attempts = 2
+      interval = "5m"
+      delay    = "25s"
+      mode     = "delay"
+    }
     ephemeral_disk {
       migrate = true
       size    = "500"
@@ -21,7 +21,6 @@ job "kafka-zookeeper" {
 
     task "zk1" {
       driver = "docker"
-      user = "zookeeper"
       //ID
       template {
         destination = "local/data/myid"
@@ -42,6 +41,7 @@ syncLimit=2
 standaloneEnabled=false
 reconfigEnabled=true
 skipACL=true
+zookeeper.datadir.autocreate=true
 dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
@@ -101,6 +101,7 @@ EOF
             client = 2181
             peer1 = 2888
             peer2 = 3888
+            httpBind = 8080
         }
         volumes = [
           "local/conf:/conf",
@@ -117,6 +118,7 @@ EOF
           port "client" {}
           port "peer1" {}
           port "peer2" {}
+          port "httpBind" {}
         }
       }
       service {
@@ -142,7 +144,6 @@ EOF
 
     task "zk2" {
       driver = "docker"
-      user = "zookeeper"
       template {
         destination = "local/data/myid"
         change_mode = "noop"
@@ -161,6 +162,7 @@ syncLimit=2
 standaloneEnabled=false
 reconfigEnabled=true
 skipACL=true
+zookeeper.datadir.autocreate=true
 dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
@@ -220,6 +222,7 @@ EOF
           client = 2181
           peer1 = 2888
           peer2 = 3888
+          httpBind = 8080
         }
         volumes = [
           "local/conf:/conf",
@@ -238,6 +241,7 @@ EOF
           port "client" {}
           port "peer1" {}
           port "peer2" {}
+          port "httpBind" {}
         }
       }
       service {
@@ -262,7 +266,6 @@ EOF
 
     task "zk3" {
       driver = "docker"
-      user = "zookeeper"
       template {
         destination = "local/data/myid"
         change_mode = "noop"
@@ -281,6 +284,7 @@ syncLimit=2
 standaloneEnabled=false
 reconfigEnabled=true
 skipACL=true
+zookeeper.datadir.autocreate=true
 dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
@@ -340,6 +344,7 @@ EOF
             client = 2181
             peer1 = 2888
             peer2 = 3888
+            httpBind = 8080
         }
         volumes = [
           "local/conf:/conf",
@@ -358,6 +363,7 @@ EOF
           port "client" {}
           port "peer1" {}
           port "peer2" {}
+          port "httpBind" {}
         }
       }
       service {
