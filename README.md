@@ -42,8 +42,6 @@ $ kafka-topics --zookeeper <kafka-zookeeper-client-1 ip>:<kafka-zookeeper-client
 ```
 
 ### Validate
-docker exec <conainer_id> /apache-zookeeper-3.5.5-bin/bin/zkServer.sh status
-
-docker exec 80ca /apache-zookeeper-3.5.5-bin/bin/zkServer.sh status &&
-    docker exec 699a /apache-zookeeper-3.5.5-bin/bin/zkServer.sh status && 
-    docker exec e035 /apache-zookeeper-3.5.5-bin/bin/zkServer.sh status
+for con in `docker ps -q --filter "ancestor=zookeeper:3.5.5"` ; \
+    do echo "$con" && docker exec $con /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status"; \
+    done
