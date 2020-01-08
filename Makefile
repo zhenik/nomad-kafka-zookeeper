@@ -5,6 +5,8 @@ NETWORK_INTERFACE_MAC := en0
 NETWORK_INTERFACE_LINUX := docker0
 NETWORK_INTERFACE := ${NETWORK_INTERFACE_LINUX}
 
+TEST_NOMAD_JOB := env-variables
+
 
 .PHONY: all
 all:
@@ -32,4 +34,12 @@ zoo-run:
 .PHONY: zoo-stop
 zoo-stop:
 	nomad stop kafka-zookeeper
+
+.PHONY: test-run
+test-run:
+	nomad run ./learn/${TEST_NOMAD_JOB}.nomad
+
+.PHONY: test-stop
+test-stop:
+	nomad stop ${TEST_NOMAD_JOB}
 

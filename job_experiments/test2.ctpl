@@ -1,0 +1,11 @@
+{{range $i, $clients := service "env-variables-some-task|any"}}
+{{$clients}}{{end}}
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+{{range services}}
+{{range $i, $s := service .Name}}{{$s}}{{end}}{{end}}
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+{{range $i, $s := service "env-variables-some-task"}}
+{{$i}}-{{$s}}
+{{with $p1 := service "peer1|any"}}PEER-1 {{$p1}} {{end}}
+{{end}}

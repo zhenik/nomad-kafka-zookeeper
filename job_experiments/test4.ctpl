@@ -1,0 +1,4 @@
+{{range $i, $services := service "env-variables-some-task|any"}}
+# {{$i}} {{.Name}}
+{{range service .Name }} {{$services}} server {{.Name}} {{.Address}}:{{.Port}}
+{{end}}{{end}}

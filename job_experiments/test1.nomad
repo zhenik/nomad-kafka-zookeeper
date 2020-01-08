@@ -1,18 +1,16 @@
 # Zookeeper
 
-job "kafka-zookeeper" {
-  datacenters = ["dc1"]
+job "zookeeper" {
+  datacenters = [ "dc1"]
   type = "service"
+  update { max_parallel = 1 }
 
-  update {
-    max_parallel = 1
-  }
-  group "zk" {
-    count = 3
+  group "zk-group" {
+    count = 1
     restart {
-      attempts = 20
-      interval = "20m"
-      delay    = "5s"
+      attempts = 2
+      interval = "5m"
+      delay    = "25s"
       mode     = "delay"
     }
     ephemeral_disk {
@@ -20,18 +18,22 @@ job "kafka-zookeeper" {
       size    = "500"
       sticky  = true
     }
-    task "zookeeper" {
+
+    task "zk" {
       driver = "docker"
+      //ID
       template {
-        destination = "local/conf/my_host"
+        destination = "local/data/myid"
         change_mode = "noop"
         data = <<EOF
-{{ env "NOMAD_IP_client" }}
+1
 EOF
       }
+      //default config
       template {
         destination = "local/conf/zoo.cfg"
-        change_mode = "noop"
+        change_mode = "restart"
+        splay = "1m"
         data = <<EOF
 tickTime=2000
 initLimit=5
@@ -39,12 +41,23 @@ syncLimit=2
 standaloneEnabled=false
 reconfigEnabled=true
 skipACL=true
-4lw.commands.whitelist=*
-secureClientPort=2281
+zookeeper.datadir.autocreate=true
 dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
       }
+      //dynamic config
+      template {
+        destination = "local/conf/zoo.cfg.dynamic"
+        change_mode = "restart"
+        splay = "1m"
+        data = <<EOF
+server.1={{ env "NOMAD_IP_client" }}:{{ env "NOMAD_HOST_PORT_peer1" }}:{{ env "NOMAD_HOST_PORT_peer2" }};{{ env "NOMAD_HOST_PORT_client" }}
+server.2={{ env "NOMAD_IP_zk2_client" }}:{{ env "NOMAD_PORT_zk2_peer1" }}:{{ env "NOMAD_PORT_zk2_peer2" }};{{ env "NOMAD_PORT_zk2_client" }}
+server.3={{ env "NOMAD_IP_zk3_client" }}:{{ env "NOMAD_PORT_zk3_peer1" }}:{{ env "NOMAD_PORT_zk3_peer2" }};{{ env "NOMAD_PORT_zk3_client" }}
+EOF
+      }
+      //logger appender
       template {
         destination = "local/conf/log4j.properties"
         change_mode = "noop"
@@ -81,16 +94,15 @@ log4j.appender.ROLLINGFILE.layout.ConversionPattern=%d{ISO8601} [myid:%X{myid}] 
 EOF
       }
       config {
-        image = "registry.simulpong.com/kafka-zookeeper:latest"
-        labels {
-            group = "zk-docker"
-        }
+        image = "alpine:latest"
+        command = "/bin/sh"
+        args = ["-c", "ls local/conf/; cat local/conf/zoo.cfg; cat local/conf/zoo.cfg.dynamic; env; sleep 40000"]
         network_mode = "host"
         port_map {
-            client = 2281
-            secure_client = 2281
-            peer1 = 2888
-            peer2 = 3888
+          client = 2181
+          peer1 = 2888
+          peer2 = 3888
+          httpBind = 8080
         }
         volumes = [
           "local/conf:/conf",
@@ -98,68 +110,37 @@ EOF
           "local/logs:/logs"
         ]
       }
-      env {
-        ZOO_LOG4J_PROP="INFO,CONSOLE"
-      }
+      env { ZOO_LOG4J_PROP="INFO,CONSOLE" }
       resources {
         cpu = 100
         memory = 128
         network {
           mbits = 10
           port "client" {}
-          port "secure_client" {}
           port "peer1" {}
           port "peer2" {}
+          port "httpBind" {}
         }
       }
       service {
         port = "client"
-        name = "kafka-zookeeper-client"
         tags = [
           "kafka-zookeeper-client"
         ]
-        check {
-          type = "script"
-          name = "zookeeper_cfg_exists"
-          command = "/bin/bash"
-          args = ["-c", "test -f /conf/zoo.cfg"]
-          interval = "5s"
-          timeout = "5s"
-          initial_status = "passing"
-        }
       }
       service {
         port = "peer1"
-        name = "kafka-zookeeper-peer1"
         tags = [
           "kafka-zookeeper-peer1"
         ]
-        check {
-          type = "script"
-          name = "zookeeper_cfg_exists"
-          command = "/bin/bash"
-          args = ["-c", "test -f /conf/zoo.cfg"]
-          interval = "5s"
-          timeout = "5s"
-          initial_status = "passing"
-        }
       }
       service {
         port = "peer2"
-        name = "kafka-zookeeper-peer2"
         tags = [
           "kafka-zookeeper-peer2"
         ]
-        check {
-          type = "script"
-          name = "zookeeper_cfg_exists"
-          command = "/bin/bash"
-          args = ["-c", "test -f /conf/zoo.cfg"]
-          interval = "5s"
-          timeout = "5s"
-          initial_status = "passing"
-        }
       }
     }
+
   }
 }
