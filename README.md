@@ -45,3 +45,18 @@ $ kafka-topics --zookeeper <kafka-zookeeper-client-1 ip>:<kafka-zookeeper-client
 for con in `docker ps -q --filter "ancestor=zookeeper:3.5.5"` ; \
     do echo "$con" && docker exec $con /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status"; \
     done
+
+
+nomad alloc exec -job -task=zk1 kafka-zookeeper /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status" && \
+    nomad alloc exec -job -task=zk2 kafka-zookeeper /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status" && \
+    nomad alloc exec -job -task=zk3 kafka-zookeeper /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status"
+
+export KAFKA_ZOOKEEPER_JOB_NAME=kafka-zookeeper && \
+    nomad alloc exec -job -task=zk1 ${KAFKA_ZOOKEEPER_JOB_NAME} /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status" && \
+    nomad alloc exec -job -task=zk2 ${KAFKA_ZOOKEEPER_JOB_NAME} /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status" && \
+    nomad alloc exec -job -task=zk3 ${KAFKA_ZOOKEEPER_JOB_NAME} /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status"
+    
+export KAFKA_ZOOKEEPER_JOB_NAME=kafka-zookeeper; \
+for counter in {1..3} ; \
+    do nomad alloc exec -job -task=zk"$counter" ${KAFKA_ZOOKEEPER_JOB_NAME} /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status"; \
+    done
