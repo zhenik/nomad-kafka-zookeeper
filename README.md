@@ -60,3 +60,8 @@ export KAFKA_ZOOKEEPER_JOB_NAME=kafka-zookeeper; \
 for counter in {1..3} ; \
     do nomad alloc exec -job -task=zk"$counter" ${KAFKA_ZOOKEEPER_JOB_NAME} /bin/bash -c "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status"; \
     done
+    
+    
+echo ruok | nc 172.17.0.1 22800 and echo stat | nc zookeeper-host zookeeper-port | grep Mode
+echo ruok | nc $NOMAD_IP_client $NOMAD_HOST_PORT_client
+echo stat | nc $NOMAD_IP_client $NOMAD_HOST_PORT_client | grep Mode
