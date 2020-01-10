@@ -42,6 +42,7 @@ standaloneEnabled=false
 reconfigEnabled=true
 skipACL=true
 zookeeper.datadir.autocreate=true
+4lw.commands.whitelist=*
 dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
@@ -126,21 +127,63 @@ EOF
         tags = [
           "kafka-zookeeper-client"
         ]
+        check {
+          type = "script"
+          name = "status"
+          command = "/bin/bash"
+          args = ["-c", "/apache-zookeeper-3.5.5-bin/bin/zkServer.sh status"]
+          interval = "15s"
+          timeout  = "10s"
+        }
+//server.1=172.17.0.1:24043:20893:participant;0.0.0.0:29888
+//server.2=172.17.0.1:22366:24518:participant;0.0.0.0:22976
+//server.3=172.17.0.1:28319:24618:participant;0.0.0.0:28064
+        check {
+          type = "script"
+          name = "ruok"
+          command = "/bin/bash"
+          args = ["-c", "echo ruok | nc $NOMAD_IP_client $NOMAD_HOST_PORT_client"]
+          interval = "5s"
+          timeout  = "2s"
+        }
+        check {
+          type = "script"
+          name = "stat"
+          command = "/bin/bash"
+          args = ["-c", "echo stat | nc $NOMAD_IP_client $NOMAD_HOST_PORT_client"]
+          interval = "5s"
+          timeout  = "2s"
+        }
       }
       service {
         port = "peer1"
         tags = [
           "kafka-zookeeper-peer1"
         ]
+        check {
+          type = "script"
+          name = "ruok peer1"
+          command = "/bin/bash"
+          args = ["-c", "echo ruok | nc $NOMAD_IP_zk2_client $NOMAD_PORT_zk2_client"]
+          interval = "5s"
+          timeout  = "2s"
+        }
       }
       service {
         port = "peer2"
         tags = [
           "kafka-zookeeper-peer2"
         ]
+        check {
+          type = "script"
+          name = "ruok peer2"
+          command = "/bin/bash"
+          args = ["-c", "echo ruok | nc $NOMAD_IP_zk3_client $NOMAD_PORT_zk3_client"]
+          interval = "5s"
+          timeout  = "2s"
+        }
       }
     }
-
 
     task "zk2" {
       driver = "docker"
@@ -163,6 +206,7 @@ standaloneEnabled=false
 reconfigEnabled=true
 skipACL=true
 zookeeper.datadir.autocreate=true
+4lw.commands.whitelist=*
 dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
@@ -285,6 +329,7 @@ standaloneEnabled=false
 reconfigEnabled=true
 skipACL=true
 zookeeper.datadir.autocreate=true
+4lw.commands.whitelist=*
 dataDir=/data
 dynamicConfigFile=/conf/zoo.cfg.dynamic
 EOF
